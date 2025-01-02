@@ -30,7 +30,7 @@ pros::adi::Pneumatics mogo('a',false);
 pros::adi::Pneumatics ziga('b', false);
 
 //intake
-pros::ADIMotor intake_lifter('d');
+pros::ADIMotor intake_lifter('b');
 
 
 // // tracking wheels
