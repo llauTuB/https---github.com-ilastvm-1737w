@@ -30,6 +30,29 @@ void moveArmToPosition(double target) {
 }
 
 double initPosArm = 0.0;
+
+
+
+bool isColorActive = false;
+
+const double HUE_BLUE_MIN = 200; 
+const double HUE_BLUE_MAX = 260; 
+
+void color_sorter_task() {
+    while (true) {
+        
+        double hue = optical.get_hue();
+
+        if (hue >= HUE_BLUE_MIN && hue <= HUE_BLUE_MAX) {
+            intake_lifter.set_value(127); 
+        } else {
+            intake_lifter.set_value(-127); 
+        }
+
+        pros::delay(50); 
+    }
+}
+
 /**
  * Runs initialization code. This occurs as soon as the program is started.
  *
@@ -65,21 +88,25 @@ void initialize() {
     pros::Task armPID([]() {
         while (true) {
             if (liftPidActive) {
-                // Рассчитываем мощность на основе ошибки
+                
                 float power = Arm_lift.update(liftTarget - arm.get_position());
                 power = fmin(fmax(power, -127), 127);
                 arm.move(power);
 
-                // Условие завершения PID
+                
                 if (std::abs(liftTarget - arm.get_position()) < 1.2) {
                     arm.move_voltage(0);
                     liftPidActive = false;
                 }
             } else {
-                pros::delay(20); // Пауза, чтобы не перегружать процессор
+                pros::delay(20); 
             }
         }
     });
+
+    optical.set_led_pwm(100);
+    pros::Task colorSorter(color_sorter_task);
+
 }
 
 
@@ -96,8 +123,7 @@ void competition_initialize() {}
 
 // get a path used for pure pursuit
 // this needs to be put outside a function
-ASSET(curveOne_txt); // '.' replaced with "_" to make c++ happy
-ASSET(curveTwo_txt); 
+ASSET(curveThree_txt);
 /**
  * Runs during auto
  *
@@ -106,71 +132,230 @@ ASSET(curveTwo_txt);
 void autonomous() {
 
     arm.set_brake_mode(pros::MotorBrake::hold);
-
     chassis.setPose(-62, 0, 90);
+
+   
+
+
+
+//1ST PART!!!
     intake.move_voltage( 12000);
     pros::delay(500);
-    chassis.moveToPoint(-48, 0, 1000, {true, 100, 10, 1});
-    chassis.turnToPoint(-48, -24, 750, {true, lemlib::AngularDirection::CW_CLOCKWISE, 127, 10, 1});
-    chassis.moveToPoint(-48, 24, 1000,{false,80, 10, 1});
+    chassis.moveToPoint(-48, 0, 950, {true, 120, 10, 1});
+    chassis.turnToPoint(-48, -24, 450, {true, lemlib::AngularDirection::CW_CLOCKWISE, 127, 10, 1});
+    chassis.moveToPoint(-48, 24, 950,{false,80, 10, 1});
     chassis.waitUntilDone();
     mogo.set_value(1);
+    
+    //1st ring
+    chassis.turnToPoint(-24, 22, 450, {true, lemlib::AngularDirection::CCW_COUNTERCLOCKWISE, 127, 10, 1}); 
+    chassis.moveToPoint(-24, 22, 1000, {true, 80, 10, 1});
 
-    chassis.turnToPoint(-24, 24, 750, {true, lemlib::AngularDirection::CCW_COUNTERCLOCKWISE, 127, 10, 1}); 
-    chassis.moveToPoint(-24, 24, 1000, {true, 80, 10, 1});  
-    chassis.turnToPoint(24, 48, 750, {true, lemlib::AngularDirection::CCW_COUNTERCLOCKWISE, 127, 10, 1});
+    //2nd ring
+    chassis.turnToPoint(24, 47, 310, {true, lemlib::AngularDirection::CCW_COUNTERCLOCKWISE, 120, 10, 1});
+    // chassis.turnToHeading(90, 600, {AngularDirection::AUTO, 127, 10, 1});
 
-    chassis.moveToPoint(24, 48, 2000, {true, 100, 10, 1});
-    pros::delay(500);
-    chassis.turnToPoint(0, 41, 750, {true, lemlib::AngularDirection::CCW_COUNTERCLOCKWISE, 127, 10, 1} );
-    chassis.moveToPoint(0, 41, 1000, {true, 100, 10, 1});
-    chassis.turnToPoint(-1, 72, 800, {true, lemlib::AngularDirection::CW_CLOCKWISE, 80, 10, 1} );
-    chassis.waitUntilDone();
-    moveArmToPosition(55);
-    chassis.moveToPoint(-1, 60, 1000, {true, 70, 10, 1});
-    chassis.waitUntilDone();
+    chassis.moveToPoint(24, 47, 1600, {true, 120, 10, 1});
     pros::delay(1500);
-    intake.brake();
-    moveArmToPosition(400);
-    pros::delay(800);
-    
-    
-    chassis.moveToPoint(-1, 48, 1000, {true, 100, 10, 1});
+
+    //wallstake
+    chassis.turnToPoint(-22, 68, 450, {true, lemlib::AngularDirection::CCW_COUNTERCLOCKWISE, 127, 10, 1} );
+    chassis.moveToPoint(3, 53, 950, {true, 120, 10, 1});
+    chassis.waitUntil(20);
+    moveArmToPosition(49);
+    // chassis.turnToPoint(0, 96, 700, {true, lemlib::AngularDirection::CW_CLOCKWISE, 120, 10, 1} );
+    chassis.turnToHeading(1, 800, {AngularDirection::AUTO, 110, 10, 1});
+    chassis.moveToPoint(3, 56, 600, {true, 30, 10, 1});
     chassis.waitUntilDone();
+    pros::delay(800);
+    intake.brake();
+    moveArmToPosition(340);
+    pros::delay(500);
+    
+    //back after wallstake
+    chassis.moveToPoint(3, 38, 950, {false, 110, 10, 1});
+    chassis.waitUntilDone();
+    
+    intake.move_voltage( -12000);
     moveArmToPosition(0);
+    pros::delay(800);
     intake.move_voltage( 12000);
-    chassis.turnToPoint(-24, 48, 750, {true, lemlib::AngularDirection::CCW_COUNTERCLOCKWISE, 127, 10, 1} );
-    chassis.moveToPoint(-24, 48, 1000, {true, 100, 10, 1});
-    pros::delay(400);
-    chassis.moveToPoint(-48, 48, 1000, {true, 80, 10, 1});
-    pros::delay(400);
-    chassis.moveToPoint(-48, 48, 1000, {true, 80, 10, 1});
-    pros::delay(400);
-    chassis.moveToPoint(-63, 48, 1000, {true, 80, 10, 1});
-    pros::delay(200);
+    chassis.moveToPoint(3, 45, 550, {true, 120, 10, 1});
 
- 
-    chassis.follow(curveOne_txt, 10, 5000, false);
+    //3th ring
+    chassis.turnToPoint(-48, 46, 450, {true, lemlib::AngularDirection::CCW_COUNTERCLOCKWISE, 127, 10, 1} );
+    chassis.moveToPoint(-24, 48, 950, {true, 80, 10, 1});
+    pros::delay(500);
 
-    chassis.moveToPoint(-48, 64, 700, {true, 80, 10, 1});
-    pros::delay(600);
+    //4th ring
+    chassis.moveToPoint(-48, 46, 950, {true, 50, 10, 1});
+    pros::delay(450);
 
+    //5th ring
+    chassis.moveToPoint(-56, 46, 950, {true, 50, 10, 1});
+    pros::delay(700);
+    
+    //6th ring
+    chassis.turnToPoint(-36, 70, 450, {true, lemlib::AngularDirection::CW_CLOCKWISE, 127, 10, 1} );
+    chassis.moveToPoint(-48, 56, 950, {true, 80, 10, 1});
+    pros::delay(950);
 
-    chassis.moveToPoint(-48, 48, 700, {false, 80, 10, 1});
-    chassis.turnToPoint(-24, 24, 750, {true, lemlib::AngularDirection::CW_CLOCKWISE, 127, 10, 1} );
-    chassis.moveToPoint(-65, 65, 700, {false, 80, 10, 1});
+    //mogo in the corner
+    chassis.turnToPoint(0, 60,450, {true, lemlib::AngularDirection::CW_CLOCKWISE, 127, 10, 1} );
+    chassis.moveToPoint(-62, 60, 700, {false, 50, 10, 1});
+    chassis.turnToPoint(0, 0, 500, {true, lemlib::AngularDirection::CW_CLOCKWISE, 127, 10, 1} );
+    //chassis.moveToPoint(-62, 62, 700, {false, 40, 10, 1});
     chassis.waitUntilDone();
     mogo.set_value(0);
     intake.brake();
-    chassis.follow(curveTwo_txt, 10, 5000, true);
-
-
-
-
     
-    // chassis.waitUntil(10);
-    // intake.brake();
-    // move 48" forwards
+    
+
+
+
+//2ND PART!!!
+    //2nd mogo
+    chassis.moveToPoint(-48, 48, 950, {true, 105, 10, 1});
+    chassis.turnToPoint(-48, 72, 450, {true, lemlib::AngularDirection::CCW_COUNTERCLOCKWISE, 127, 10, 1} );
+    chassis.moveToPoint(-50, -22, 5000, {false, 80, 10, 1});
+    chassis.waitUntilDone();
+    mogo.set_value(1);
+    intake.move_voltage( 12000);
+
+    //1st ring
+    chassis.turnToPoint(0, -21, 450, {true, lemlib::AngularDirection::CW_CLOCKWISE, 127, 10, 1} );
+    chassis.moveToPoint(-26, -21, 1000, {true, 110, 10, 1});
+
+    // //2nd ring
+    // chassis.turnToPoint(0, 24, 700, {true, lemlib::AngularDirection::CCW_COUNTERCLOCKWISE, 127, 10, 1} );
+    // chassis.moveToPoint(0, 0, 1500, {true, 100, 10, 1});
+    // pros::delay(200);
+    // chassis.moveToPoint(-24, -22, 1500, {false, 100, 10, 1});
+
+    //2nd ring 
+    chassis.turnToPoint(-26, -72, 450, {true, lemlib::AngularDirection::CW_CLOCKWISE, 127, 10, 1} );
+    chassis.moveToPoint(-26, -43, 950, {true, 105, 10, 1});
+
+    //3rd ring
+    chassis.turnToPoint(-72, -43, 450, {true, lemlib::AngularDirection::CW_CLOCKWISE, 127, 10, 1} );
+    chassis.moveToPoint(-48, -43, 950, {true, 105, 10, 1});
+    pros::delay(700);
+
+    //4th ring
+    chassis.moveToPoint(-59, -43, 950, {true, 50, 10, 1});
+    pros::delay(700);
+
+    //5th ring
+    chassis.turnToPoint(-48, -70, 450, {true, lemlib::AngularDirection::CCW_COUNTERCLOCKWISE, 127, 10, 1} );
+    chassis.moveToPoint(-48, -56, 950, {true, 50, 10, 1});
+    pros::delay(1000);
+
+    //mogo in the corner
+    chassis.turnToPoint(0, -24, 450, {true, lemlib::AngularDirection::CCW_COUNTERCLOCKWISE, 127, 10, 1} );
+    chassis.moveToPoint(-64, -64, 1200, {false, 70, 10, 1});
+    chassis.waitUntilDone();
+    mogo.set_value(0);
+    
+
+    //wallstake
+    //chassis.turnToPoint(0, -56, 450, {true, lemlib::AngularDirection::CW_CLOCKWISE, 127, 10, 1} );
+    chassis.turnToHeading(83, 500, {AngularDirection::AUTO, 120, 10, 1});
+
+    chassis.moveToPoint(-5, -56, 2200, {true, 90, 10, 1});
+    chassis.waitUntil(20);
+    moveArmToPosition(49);
+    // chassis.turnToPoint(0, -72, 700, {true, lemlib::AngularDirection::CW_CLOCKWISE, 120, 10, 1} );
+    chassis.turnToHeading(181.5, 600, {AngularDirection::AUTO, 120, 10, 1});
+    chassis.moveToPoint(-5, -63, 1000, {true, 80, 10, 1});
+    chassis.waitUntilDone();
+    pros::delay(1000);
+    intake.brake();
+    moveArmToPosition(340);
+    pros::delay(500);
+    
+    //back after wallstake
+    chassis.moveToPoint(-5, -42, 1000, {false, 80, 10, 1});
+    chassis.waitUntilDone();
+    
+
+//3RD PART!!!
+    //1st ring
+    intake.move_voltage( -12000);
+    moveArmToPosition(0);
+    pros::delay(800);
+    intake.move_voltage( 12000);
+
+
+    chassis.turnToPoint(48, 0, 500, {true, lemlib::AngularDirection::CCW_COUNTERCLOCKWISE, 127, 10, 1} );
+    chassis.moveToPoint(24, -24, 950, {true, 105, 10, 1});
+    chassis.waitUntilDone();
+    intake.brake();
+
+
+    //mogo
+    chassis.turnToPoint(48, 0, 750, {false, lemlib::AngularDirection::CW_CLOCKWISE, 127, 10, 1} );
+
+    chassis.follow(curveThree_txt, 10, 2000, false);
+    chassis.waitUntilDone();
+    mogo.set_value(true);
+    intake.move_voltage( 12000);
+    
+
+
+    //2nd 
+
+    chassis.turnToPoint(47, -68, 500, {true, lemlib::AngularDirection::CCW_COUNTERCLOCKWISE, 127, 10, 1} );
+    chassis.moveToPoint(47, -50, 1500, {true, 100, 10, 1});
+
+ 
+
+    //3rd ring
+    chassis.moveToPoint(47, 0, 2000, {false, 120, 10, 1});
+    chassis.turnToPoint(-2, 48, 600, {true, lemlib::AngularDirection::CW_CLOCKWISE, 127, 10, 1} );
+    chassis.turnToHeading(315, 650, {AngularDirection::AUTO, 120, 10, 1});
+
+    chassis.moveToPoint(21, 25, 1000, {true, 110, 10, 1});
+
+    //4th ring
+    chassis.turnToPoint(72, 72, 500, {true, lemlib::AngularDirection::CW_CLOCKWISE, 127, 10, 1} );
+    chassis.moveToPoint(45, 45, 950, {true, 80, 10, 1});
+
+    //5th ring
+    chassis.moveToPoint(38, 38, 950, {false, 110, 10, 1});
+    chassis.turnToPoint(48, 60, 450, {true, lemlib::AngularDirection::CCW_COUNTERCLOCKWISE, 127, 10, 1} );
+    chassis.moveToPoint(43, 50, 700, {true, 100, 10, 1});
+    pros::delay(600);
+
+
+
+
+    //in the corner
+    // chassis.moveToPoint(39, 50, 950, {false, 100, 10, 1});
+    chassis.turnToHeading(50, 500, {AngularDirection::AUTO, 127, 10, 1});
+    chassis.moveToPoint(28, 52, 1000, {false, 70, 10, 1});
+    chassis.waitUntilDone();
+    ziga.set_value(1);
+    chassis.moveToPoint(64, 65, 3000, {true, 70, 10, 1});
+    chassis.turnToHeading(225, 1200, {AngularDirection::AUTO, 100, 10, 1});
+
+    chassis.moveToPoint(67, 66, 1000, {false, 90, 10, 1});
+    mogo.set_value(0);
+    chassis.waitUntilDone();
+    ziga.set_value(0);
+    
+    
+
+
+
+    //2nd mogo in the corner
+    
+    chassis.moveToPoint(40, 40, 1000, {true, 80, 10, 1});
+    chassis.turnToPoint(66, -24, 500, {true, lemlib::AngularDirection::CCW_COUNTERCLOCKWISE, 127, 10, 1} );
+    chassis.moveToPoint(66, -15, 3200, {true, 110, 10, 1});
+    chassis.moveToPoint(79, -61, 3000, {true, 120, 10, 1});
+    chassis.moveToPoint(-60, -61, 3000, {false, 70, 10, 1});
+    
+    intake.brake();
 
 
 
@@ -178,36 +363,54 @@ void autonomous() {
 
 
 
-    // // Move to x: 20 and y: 15, and face heading 90. Timeout set to 4000 ms
-    // chassis.moveToPose(20, 15, 90, 4000);
 
-    // chassis.setPose(-68.763, -23.197, 68.205);
-    // chassis.follow(curve_txt, 5, 4000, true);
-    // chassis.moveToPoint(0, 10, 4000);
-    // // Move to x: 0 and y: 0 and face heading 270, going backwards. Timeout set to 4000ms
-    // chassis.moveToPose(0, 0, 270, 4000, {.forwards = false});
-    // // cancel the movement after it has traveled 10 inches
-    // chassis.waitUntil(10);
-    // chassis.cancelMotion();
-    // // Turn to face the point x:45, y:-45. Timeout set to 1000 
-    // // dont turn faster than 60 (out of a maximum of 127)
-    // chassis.turnToPoint(45, -45, 1000, {.maxSpeed = 60});
-    // // Turn to face a direction of 90º. Timeout set to 1000
-    // // will always be faster than 100 (out of a maximum of 127)
-    // // also force it to turn clockwise, the long way around
-    // chassis.turnToHeading(90, 1000, {.direction = AngularDirection::CW_CLOCKWISE, .minSpeed = 100});
-    // // Follow the path in path.txt. Lookahead at 15, Timeout set to 4000
-    // // following the path with the back of the robot (forwards = false)
-    // // see line 116 to see how to define a path
-    // chassis.follow(example_txt, 15, 4000, false);
-    // // wait until the chassis has traveled 10 inches. Otherwise the code directly after
-    // // the movement will run immediately
-    // // Unless its another movement, in which case it will wait
-    // chassis.waitUntil(10);
-    // pros::lcd::print(4, "Traveled 10 inches during pure pursuit!");
-    // // wait until the movement is done
+
+
+
+    // chassis.turnToPoint(85, -70, 1000, {true, lemlib::AngularDirection::CCW_COUNTERCLOCKWISE, 127, 10, 1} );
+    // chassis.turnToHeading(140, 1500, {AngularDirection::CCW_COUNTERCLOCKWISE, 100, 10, 1});
+
     // chassis.waitUntilDone();
-    // pros::lcd::print(4, "pure pursuit finished!");
+    // ziga.set_value(1);
+    // chassis.moveToPoint(64, -54, 1500, {true, 40, 10, 1});
+    // chassis.turnToHeading(315, 950, {AngularDirection::AUTO, 100, 10, 1});
+    // chassis.waitUntilDone();
+    // mogo.set_value(0);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 
@@ -222,6 +425,14 @@ void autonomous() {
  bool pisunState = false;
  bool intake_l_State = false;
 
+void toggleIntakeLifter() {
+    intake_l_State = !intake_l_State;  
+    if (intake_l_State) {
+        intake_lifter.set_value(127);  
+    } else {
+        intake_lifter.set_value(-127); 
+    }
+}
 void opcontrol() {
 
     arm.set_brake_mode(pros::MotorBrake::hold); 
@@ -290,14 +501,14 @@ void opcontrol() {
             mogo.set_value(mogoState);  
         }
 
-        if(master.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
+        if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
             pisunState = !pisunState;
             ziga.set_value(pisunState);
         }
         
         if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)) {
-            intake_l_State = !intake_l_State;  
-            intake_lifter.set_value(intake_l_State);  
+            toggleIntakeLifter(); 
+            pros::delay(100);  
         }
 
         // pros::lcd::print(4, "Lift: %f", arm.get_position() / ratio);

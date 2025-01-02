@@ -1,4 +1,6 @@
 #include "main.h" // IWYU pragma: keep
+#include "pros/adi.hpp"
+#include "pros/optical.hpp"
 
 // master
 pros::Controller master(pros::E_CONTROLLER_MASTER);
@@ -17,6 +19,10 @@ pros::Motor arm(-21, pros::MotorGearset::green);
 // Inertial Sensor on port 10
 pros::Imu imu(1);
 
+
+// Optical sensor
+pros::Optical optical(2);
+
 //Mogomech
 pros::adi::Pneumatics mogo('a',false);
 
@@ -24,7 +30,7 @@ pros::adi::Pneumatics mogo('a',false);
 pros::adi::Pneumatics ziga('b', false);
 
 //intake
-pros::adi::Pneumatics intake_lifter('c', true);
+pros::ADIMotor intake_lifter('d');
 
 
 // // tracking wheels

@@ -4,6 +4,7 @@
 #include "pros/misc.hpp"
 #include "pros/motor_group.hpp"
 #include "pros/motors.hpp"
+#include "pros/optical.hpp"
 
 extern pros::Controller master;
 
@@ -15,9 +16,12 @@ extern pros::Motor arm;
 
 extern pros::adi::Pneumatics mogo;
 extern pros::adi::Pneumatics ziga;
-extern pros::adi::Pneumatics intake_lifter;
+//extern pros::adi::Pneumatics intake_lifter;
+extern pros::ADIMotor intake_lifter;
 
 extern pros::adi::Encoder horizontalEnc;
 extern pros::adi::Encoder verticalEnc;
 
 extern pros::Imu imu;
+extern pros::Optical optical;
+
